@@ -24,7 +24,7 @@ export function SearchBar() {
         <div className="w-full max-w-4xl mx-auto">
             <form
                 onSubmit={handleSearch}
-                className="bg-white rounded-full shadow-lg border border-gray-200 overflow-hidden"
+                className="bg-white shadow-lg border border-gray-200 overflow-hidden rounded-3xl md:rounded-full"
             >
                 {/* Desktop Layout */}
                 <div className="hidden md:flex items-center p-2 pl-6 gap-2">
