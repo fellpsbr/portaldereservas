@@ -11,7 +11,9 @@ import { getProperties } from "@/lib/data/properties";
 import { Search, SlidersHorizontal, MapPin, DollarSign, Home } from "lucide-react";
 import { Property } from "@/lib/types";
 
-export default function BuscaPage() {
+import { Suspense } from "react";
+
+function SearchContent() {
     const searchParams = useSearchParams();
     const [showFilters, setShowFilters] = useState(false);
     const [properties, setProperties] = useState<Property[]>([]);
@@ -194,5 +196,17 @@ export default function BuscaPage() {
 
             <Footer />
         </div>
+    );
+}
+
+export default function BuscaPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <p>Carregando busca...</p>
+            </div>
+        }>
+            <SearchContent />
+        </Suspense>
     );
 }
