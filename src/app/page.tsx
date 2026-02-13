@@ -1,93 +1,126 @@
+
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Hero } from "@/components/layout/Hero";
+import { SearchBar } from "@/components/features/search/SearchBar";
+import { CategoryFilter } from "@/components/features/search/CategoryFilter";
+import { PropertyCard } from "@/components/features/property/PropertyCard";
+import { getProperties } from "@/lib/data/properties";
+import { Property } from "@/lib/types";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
-export default function Home() {
+const CATEGORIES = [
+  { id: "all", label: "Todos" },
+  { id: "pousada", label: "Pousadas" },
+  { id: "sitio", label: "Sítios" },
+  { id: "fazenda", label: "Fazendas" },
+  { id: "praia", label: "Litoral" },
+  { id: "piscina", label: "Com Piscina" },
+  { id: "gastronomia", label: "Gastronomia" },
+];
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const category = resolvedSearchParams.category || "all";
+  const properties = await getProperties();
+
+  // Filter properties based on category
+  const filteredProperties = category === "all"
+    ? properties
+    : properties.filter((p) => {
+      if (category === "pousada") return p.type === "pousada";
+      if (category === "sitio") return p.type === "sitio";
+      if (category === "fazenda") return p.type === "fazenda";
+      if (category === "praia") return ["Guarujá", "Ubatuba", "Ilhabela"].includes(p.location.city);
+      if (category === "piscina") return p.amenities.some(a => a.toLowerCase().includes("piscina"));
+      return true;
+    });
+
+  const featuredProperties = filteredProperties.slice(0, 4);
+  const recentProperties = filteredProperties.slice(2, 6);
+  const regionProperties = properties.filter(p => p.location.city === "Guarujá").slice(0, 4);
+
+  const Section = ({ title, subtitle, items, linkText, linkHref }: { title: string, subtitle?: string, items: Property[], linkText?: string, linkHref?: string }) => {
+    if (items.length === 0) return null;
+    return (
+      <section className="py-8 border-b border-gray-100 last:border-0">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+              {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
+            </div>
+            {linkText && linkHref && (
+              <Link href={linkHref} className="flex items-center text-sm font-medium text-gray-900 hover:underline">
+                {linkText} <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {items.map((property, index) => (
+              <PropertyCard key={property.id} property={property} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
-      <main className="flex-1">
-        <Hero />
-
-        {/* Featured Regions Section */}
-        <section className="py-16 bg-gray-50">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Explore por Região
-              </h2>
-              <p className="text-lg text-gray-600">
-                Descubra destinos incríveis em todo o estado de São Paulo
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: "Serra da Mantiqueira",
-                  image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070",
-                  count: "24 propriedades"
-                },
-                {
-                  name: "Litoral Norte",
-                  image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070",
-                  count: "18 propriedades"
-                },
-                {
-                  name: "Interior Paulista",
-                  image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2032",
-                  count: "32 propriedades"
-                }
-              ].map((region) => (
-                <div
-                  key={region.name}
-                  className="group relative h-64 rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl transition-shadow duration-300"
-                >
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-                    style={{ backgroundImage: `url('${region.image}')` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-2xl font-bold mb-1">{region.name}</h3>
-                    <p className="text-sm text-white/80">{region.count}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+      <main className="flex-1 pb-16">
+        <div className="bg-white border-b border-gray-100 pt-6 pb-8 px-4">
+          <div className="mx-auto max-w-7xl relative z-10">
+            <SearchBar />
           </div>
-        </section>
-
-        {/* Property Types Section */}
-        <section className="py-16 bg-white">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Tipos de Acomodação
-              </h2>
-              <p className="text-lg text-gray-600">
-                Encontre o estilo perfeito para sua estadia
-              </p>
+        </div>
+        <CategoryFilter />
+        <div className="pt-6">
+          {filteredProperties.length > 0 ? (
+            <>
+              <Section
+                title={category === 'all' ? "Acomodações muito procuradas" : `Opções de ${CATEGORIES.find(c => c.id === category)?.label || category}`}
+                subtitle={category === 'all' ? "Os preferidos dos hóspedes no Portal" : undefined}
+                items={featuredProperties}
+                linkText="Mostrar mais"
+                linkHref={`/busca?category=${category}`}
+              />
+              <Section
+                title="Disponível neste fim de semana"
+                items={recentProperties}
+                linkText="Ver disponibilidade"
+                linkHref="/busca"
+              />
+              {category === 'all' && (
+                <Section
+                  title="Fique em Guarujá"
+                  items={regionProperties}
+                  linkText="Ver todos em Guarujá"
+                  linkHref="/busca?location=Guarujá"
+                />
+              )}
+            </>
+          ) : (
+            <div className="mx-auto max-w-7xl px-4 md:px-8 py-16 text-center">
+              <h3 className="text-lg font-semibold text-gray-900">Nenhuma acomodação encontrada nesta categoria.</h3>
+              <p className="text-gray-500 mt-2">Tente selecionar outra categoria ou limpar os filtros.</p>
+              <Link href="/">
+                <button className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+                  Limpar filtros
+                </button>
+              </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { type: "Pousadas", icon: "🏡", description: "Conforto e hospitalidade" },
-                { type: "Sítios", icon: "🌳", description: "Natureza e tranquilidade" },
-                { type: "Fazendas", icon: "🐴", description: "Experiência rural autêntica" }
-              ].map((item) => (
-                <div
-                  key={item.type}
-                  className="p-8 text-center border-2 border-gray-200 rounded-xl hover:border-[#2E8B57] hover:shadow-lg transition-all duration-300 cursor-pointer"
-                >
-                  <div className="text-5xl mb-4">{item.icon}</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{item.type}</h3>
-                  <p className="text-gray-600">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
   );
 }
+
+
